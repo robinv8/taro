@@ -3,43 +3,15 @@ const path = require('path')
 const fs = require('fs-extra')
 const program = require('commander')
 const chalk = require('chalk')
-const { getPkgItemByKey } = require('../src/util')
+const { getPkgItemByKey, shouldUseYarn, shouldUseCnpm } = require('../dist/util')
 const ora = require('ora')
 const exec = require('child_process').exec
 const getLatestVersion = require('latest-version')
-const { PROJECT_CONFIG } = require('../src/util')
+const { PROJECT_CONFIG, UPDATE_PACKAGE_LIST } = require('../dist/util/constants')
 const projectConfPath = path.join(process.cwd(), PROJECT_CONFIG)
 const pkgPath = path.join(process.cwd(), 'package.json')
-const { shouldUseYarn, shouldUseCnpm } = require('../src/util')
 
 const pkgName = getPkgItemByKey('name')
-
-const UPDATE_PACKAGE_LIST = [
-  '@tarojs/taro',
-  '@tarojs/async-await',
-  '@tarojs/cli',
-  '@tarojs/components',
-  '@tarojs/components-rn',
-  '@tarojs/taro-h5',
-  '@tarojs/plugin-babel',
-  '@tarojs/plugin-csso',
-  '@tarojs/plugin-sass',
-  '@tarojs/plugin-less',
-  '@tarojs/plugin-stylus',
-  '@tarojs/plugin-uglifyjs',
-  '@tarojs/redux',
-  '@tarojs/redux-h5',
-  '@tarojs/taro-rn',
-  '@tarojs/rn-runner',
-  '@tarojs/router',
-  '@tarojs/taro-weapp',
-  '@tarojs/webpack-runner',
-  'postcss-plugin-constparse',
-  'eslint-config-taro',
-  'eslint-plugin-taro',
-  'taro-transformer-wx',
-  'postcss-pxtransform'
-]
 
 // 这里没有使用 command 的形式：taro-update-self
 program.parse(process.argv)
@@ -71,15 +43,13 @@ function info () {
 
 function updateSelf () {
   let command
-  if (shouldUseYarn()) {
-    command = 'yarn global add @tarojs/cli@latest'
-  } else if (shouldUseCnpm()) {
+  if (shouldUseCnpm()) {
     command = 'cnpm i -g @tarojs/cli@latest'
   } else {
     command = 'npm i -g @tarojs/cli@latest'
   }
 
-  let child = exec(command)
+  const child = exec(command)
 
   const spinner = ora('即将将 Taro 开发工具 taro-cli 更新到最新版本...').start()
 
@@ -101,16 +71,26 @@ async function updateProject () {
   const packageMap = require(pkgPath)
 
   const version = await getLatestVersion(pkgName)
+  // 获取 NervJS 版本
+  const nervJSVersion = `^${await getLatestVersion('nervjs')}`
 
-  // 更新 @tarojs/* 版本
+  // 更新 @tarojs/* 版本和 NervJS 版本
   Object.keys(packageMap.dependencies).forEach((key) => {
     if (UPDATE_PACKAGE_LIST.indexOf(key) !== -1) {
-      packageMap.dependencies[key] = version
+      if (key.includes('nerv')) {
+        packageMap.dependencies[key] = nervJSVersion
+      } else {
+        packageMap.dependencies[key] = version
+      }
     }
   })
   Object.keys(packageMap.devDependencies).forEach((key) => {
     if (UPDATE_PACKAGE_LIST.indexOf(key) !== -1) {
-      packageMap.devDependencies[key] = version
+      if (key.includes('nerv')) {
+        packageMap.devDependencies[key] = nervJSVersion
+      } else {
+        packageMap.devDependencies[key] = version
+      }
     }
   })
 
@@ -125,14 +105,14 @@ async function updateProject () {
 
   let command
   if (shouldUseYarn()) {
-    command = 'yarn install'
+    command = 'yarn'
   } else if (shouldUseCnpm()) {
     command = 'cnpm install'
   } else {
     command = 'npm install'
   }
 
-  let child = exec(command)
+  const child = exec(command)
 
   const spinner = ora('即将将项目所有 Taro 相关依赖更新到最新版本...').start()
 

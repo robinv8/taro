@@ -1,114 +1,154 @@
-import * as webpack from 'webpack'
-import * as MiniCssExtractPlugin from 'mini-css-extract-plugin'
-import * as UglifyJsPlugin from 'uglifyjs-webpack-plugin'
+import * as path from 'path';
+import { get, mapValues, merge } from 'lodash'
 
-import { getPostcssPlugins } from './postcss.conf'
-import { BuildConfig } from '../util/types'
+import { addTrailingSlash, emptyObj } from '../util';
+import {
+  getCopyWebpackPlugin,
+  getCssoWebpackPlugin,
+  getDefinePlugin,
+  getDevtool,
+  getHtmlWebpackPlugin,
+  getMiniCssExtractPlugin,
+  getModule,
+  getOutput,
+  getUglifyPlugin,
+  processEnvOption
+} from '../util/chain';
+import { BuildConfig } from '../util/types';
+import getBaseChain from './base.conf';
 
-const defaultCSSCompressConf = {
-  mergeRules: false,
-  mergeIdents: false,
-  reduceIdents: false,
-  discardUnused: false,
-  minifySelectors: false
-}
-const defaultJSCompressConf = {
-  keep_fnames: true,
-  output: {
-    comments: false,
-    keep_quoted_props: true,
-    quote_keys: true,
-    beautify: false
-  },
-  warnings: false
-}
+export default function (appPath: string, config: Partial<BuildConfig>): any {
+  const chain = getBaseChain(appPath)
+  const {
+    alias = emptyObj,
+    copy,
+    entry = emptyObj,
+    output = emptyObj,
+    sourceRoot = '',
+    outputRoot = 'dist',
+    publicPath = '',
+    staticDirectory = 'static',
+    chunkDirectory = 'chunk',
+    router = emptyObj,
 
-export default (config: BuildConfig): webpack.Configuration => {
-  const useModuleConf = config.module || {
-    compress: {}
-  }
-  const sourceMap = config.sourceMap
-  const cssExtractPlugins = [] as any[]
-  const devtool = 'hidden-source-map'
-  const compress = Object.assign({}, {
-    css: defaultCSSCompressConf,
-    js: defaultJSCompressConf
-  }, useModuleConf.compress)
-  const cssLoader = {
-    loader: require.resolve('css-loader'),
-    options: {
-      importLoaders: 1,
-      minimize: compress.css,
-      sourceMap
-    }
-  }
-  const postcssLoader = {
-    loader: require.resolve('postcss-loader'),
-    options: {
-      ident: 'postcss',
-      plugins: () => getPostcssPlugins(config)
-    }
-  }
-  const sassLoader = require.resolve('sass-loader')
-  const lessLoader = require.resolve('less-loader')
-  const stylusLoader = require.resolve('stylus-loader')
+    designWidth = 750,
+    deviceRatio,
+    enableSourceMap = false,
+    enableExtract = true,
 
-  const cssLoaders = [{
-    test: /\.(css|scss|sass)(\?.*)?$/,
-    exclude: /node_modules/,
-    use: [ MiniCssExtractPlugin.loader, cssLoader, postcssLoader, sassLoader ]
-  }, {
-    test: /\.less(\?.*)?$/,
-    exclude: /node_modules/,
-    use: [ MiniCssExtractPlugin.loader, cssLoader, postcssLoader, lessLoader ]
-  }, {
-    test: /\.styl(\?.*)?$/,
-    exclude: /node_modules/,
-    use: [ MiniCssExtractPlugin.loader, cssLoader, postcssLoader, stylusLoader ]
-  }, {
-    test: /\.(css|scss|sass)(\?.*)?$/,
-    include: /node_modules/,
-    use: [ MiniCssExtractPlugin.loader, cssLoader, sassLoader ]
-  }, {
-    test: /\.less(\?.*)?$/,
-    include: /node_modules/,
-    use: [ MiniCssExtractPlugin.loader, cssLoader, lessLoader ]
-  }, {
-    test: /\.styl(\?.*)?$/,
-    include: /node_modules/,
-    use: [ MiniCssExtractPlugin.loader, cssLoader, stylusLoader ]
-  }]
+    defineConstants = emptyObj,
+    env = emptyObj,
+    styleLoaderOption = emptyObj,
+    cssLoaderOption = emptyObj,
+    sassLoaderOption = emptyObj,
+    lessLoaderOption = emptyObj,
+    stylusLoaderOption = emptyObj,
+    mediaUrlLoaderOption = emptyObj,
+    fontUrlLoaderOption = emptyObj,
+    imageUrlLoaderOption = emptyObj,
 
-  cssExtractPlugins.push(new MiniCssExtractPlugin({
-    filename: 'css/[name].css',
-    chunkFilename: 'css/[id].css'
-  }))
+    miniCssExtractPluginOption = emptyObj,
+    esnextModules = [],
 
-  return {
-    mode: 'production',
-    devtool,
-    module: {
-      rules: [
-        {
-          oneOf: [
-            ...cssLoaders
-          ]
-        }
-      ]
+    module = {
+      postcss: emptyObj
     },
-    resolve: {
-      mainFields: ['main']
-    },
+    plugins = {
+      babel: {}
+    }
+  } = config
+
+  const isMultiRouterMode = get(router, 'mode') === 'multi'
+
+  const plugin: any = {}
+
+  if (enableExtract) {
+    plugin.miniCssExtractPlugin = getMiniCssExtractPlugin([{
+      filename: 'css/[name].css',
+      chunkFilename: 'css/[name].css'
+    }, miniCssExtractPluginOption])
+  }
+
+  if (copy) {
+    plugin.copyWebpackPlugin = getCopyWebpackPlugin({ copy, appPath })
+  }
+
+  if (isMultiRouterMode) {
+    merge(plugin, mapValues(entry, (filePath, entryName) => {
+      return getHtmlWebpackPlugin([{
+        filename: `${entryName}.html`,
+        template: path.join(appPath, sourceRoot, 'index.html'),
+        chunks: [entryName]
+      }])
+    }))
+  } else {
+    plugin.htmlWebpackPlugin = getHtmlWebpackPlugin([{
+      filename: 'index.html',
+      template: path.join(appPath, sourceRoot, 'index.html')
+    }])
+  }
+
+  plugin.definePlugin = getDefinePlugin([processEnvOption(env), defineConstants])
+
+  const isCssoEnabled = (plugins.csso && plugins.csso.enable === false)
+    ? false
+    : true
+
+  if (isCssoEnabled) {
+    plugin.cssoWebpackPlugin = getCssoWebpackPlugin([plugins.csso ? plugins.csso.config : {}])
+  }
+
+  const mode = 'production'
+
+  const minimizer: any[] = []
+  const isUglifyEnabled = (plugins.uglify && plugins.uglify.enable === false)
+    ? false
+    : true
+
+  if (isUglifyEnabled) {
+    minimizer.push(getUglifyPlugin([
+      enableSourceMap,
+      plugins.uglify ? plugins.uglify.config : {}
+    ]))
+  }
+
+  chain.merge({
+    mode,
+    devtool: getDevtool(enableSourceMap),
+    entry,
+    output: getOutput(appPath, [{
+      outputRoot,
+      publicPath: addTrailingSlash(publicPath),
+      chunkDirectory
+    }, output]),
+    resolve: { alias },
+    module: getModule(appPath, {
+      designWidth,
+      deviceRatio,
+      enableExtract,
+      enableSourceMap,
+  
+      styleLoaderOption,
+      cssLoaderOption,
+      lessLoaderOption,
+      sassLoaderOption,
+      stylusLoaderOption,
+      fontUrlLoaderOption,
+      imageUrlLoaderOption,
+      mediaUrlLoaderOption,
+      esnextModules,
+  
+      module,
+      plugins,
+      staticDirectory
+    }),
+    plugin,
     optimization: {
-      minimizer: [
-        new UglifyJsPlugin({
-          cache: true,
-          parallel: true,
-          sourceMap,
-          uglifyOptions: compress.js
-        })
-      ]
-    },
-    plugins: cssExtractPlugins
-  } as webpack.Configuration
+      minimizer,
+      splitChunks: {
+        name: false
+      }
+    }
+  })
+  return chain
 }

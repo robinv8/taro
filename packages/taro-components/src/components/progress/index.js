@@ -1,6 +1,7 @@
+import 'weui'
 import Nerv from 'nervjs'
 import classNames from 'classnames'
-import _ from '../../../utils/parse-type'
+import { isNumber, isBoolean, isString } from '../../utils/parse-type'
 
 /**
  * props 类型检测
@@ -15,23 +16,26 @@ function parseType (props) {
     strokeWidth,
     activeColor,
     backgroundColor,
-    active
+    active,
+    borderRadius
   } = props
 
   // 抛出错误信息
   const throwErrorMsg = type => {
     throw new TypeError(type)
   }
-  if (showInfo) _.isBoolean(showInfo) ? '' : throwErrorMsg('showInfo')
-  if (active) _.isBoolean(active) ? '' : throwErrorMsg('active')
+  if (showInfo) isBoolean(showInfo) ? '' : throwErrorMsg('showInfo')
+  if (active) isBoolean(active) ? '' : throwErrorMsg('active')
 
-  if (percent) _.isNumber(percent) ? '' : throwErrorMsg('percent')
-  if (strokeWidth) _.isNumber(strokeWidth) ? '' : throwErrorMsg('strokeWidth')
+  if (percent) isNumber(percent) ? '' : throwErrorMsg('percent')
+  if (strokeWidth) isNumber(strokeWidth) ? '' : throwErrorMsg('strokeWidth')
 
-  if (activeColor) _.isString(activeColor) ? '' : throwErrorMsg('activeColor')
+  if (activeColor) isString(activeColor) ? '' : throwErrorMsg('activeColor')
   if (backgroundColor) {
-    _.isString(backgroundColor) ? '' : throwErrorMsg('backgroundColor')
+    isString(backgroundColor) ? '' : throwErrorMsg('backgroundColor')
   }
+
+  if (borderRadius) isString(borderRadius) ? '' : throwErrorMsg('borderRadius')
 }
 
 const Progress = (props) => {
@@ -43,7 +47,8 @@ const Progress = (props) => {
     activeColor,
     backgroundColor,
     active,
-    percent
+    percent,
+    borderRadius
   } = props
   let pgPercent = percent > 100 ? 100 : percent < 0 ? 0 : percent
   const cls = classNames('weui-progress', className)
@@ -51,7 +56,8 @@ const Progress = (props) => {
     width: pgPercent + '%',
     backgroundColor: activeColor,
     WebkitTransition: active ? `width 1s ease-in-out` : 'none',
-    transition: active ? `width 1s ease-in-out` : 'none'
+    transition: active ? `width 1s ease-in-out` : 'none',
+    borderRadius: borderRadius ? `${borderRadius}px` : 0
   }
   let pgHeight = {
     height: strokeWidth + 'px',

@@ -1,50 +1,94 @@
-import * as autoprefixer from 'autoprefixer'
-import * as pxtransform from 'postcss-pxtransform'
-import * as constparse from 'postcss-plugin-constparse'
+import * as autoprefixer from 'autoprefixer';
+import * as path from 'path';
+import * as constparse from 'postcss-plugin-constparse';
+import * as pxtransform from 'postcss-pxtransform';
+import { sync as resolveSync } from 'resolve';
+import { isNpmPackage, recursiveMerge } from '../util';
 
-import { isEmptyObject } from '../util'
+import { PostcssOption, TogglableOptions } from '../util/types'
 
-const defaultAutoprefixerConf = {
-  browsers: [
-    'Android >= 4',
-    'iOS >= 6'
-  ],
-  flexbox: 'no-2009'
+const defaultAutoprefixerOption = {
+  enable: true,
+  config: {
+    browsers: [
+      'Android >= 4',
+      'iOS >= 6'
+    ],
+    flexbox: 'no-2009'
+  }
 }
+const defaultPxtransformOption: {
+  [key: string]: any
+} = {
+  enable: true,
+  config: {
+    platform: 'h5'
+  }
+}
+// const defaultCssModulesOption = {
+//   enable: false,
+//   config: {}
+// }
+const defaultConstparseOption = {
+  constants: [{
+    key: 'taro-tabbar-height',
+    val: '50PX'
+  }],
+  platform: 'h5'
+}
+
+const optionsWithDefaults = ['autoprefixer', 'pxtransform', 'cssModules']
 
 const plugins = [] as any[]
 
-export const getPostcssPlugins = function (config) {
-  const designWidth = config.designWidth || 750
-  const useModuleConf = config.module || {}
-  const customPostcssConf = useModuleConf.postcss || {}
-  const customAutoprefixerConf = customPostcssConf.autoprefixer || {}
-  const customPxtransformConf = customPostcssConf.pxtransform || {}
-  const customPlugins = customPostcssConf.plugins || []
+export const getPostcssPlugins = function (appPath: string, {
+  designWidth,
+  deviceRatio,
+  postcssOption = {} as PostcssOption
+}) {
 
-  const postcssPxtransformOption = {
-    designWidth,
-    platform: 'h5'
+  if (designWidth) {
+    defaultPxtransformOption.config.designWidth = designWidth
   }
 
-  const DEVICE_RATIO = 'deviceRatio'
-  if (config.hasOwnProperty(DEVICE_RATIO)) {
-    postcssPxtransformOption[DEVICE_RATIO] = config.deviceRatio
+  if (deviceRatio) {
+    defaultPxtransformOption.config.deviceRatio = deviceRatio
   }
 
-  if (isEmptyObject(customAutoprefixerConf) || customAutoprefixerConf.enable) {
-    plugins.push(autoprefixer(Object.assign({}, defaultAutoprefixerConf, customAutoprefixerConf)))
+  const autoprefixerOption = recursiveMerge<TogglableOptions>({}, defaultAutoprefixerOption, postcssOption.autoprefixer)
+  const pxtransformOption = recursiveMerge<TogglableOptions>({}, defaultPxtransformOption, postcssOption.pxtransform)
+  // const cssModulesOption = recursiveMerge({}, defaultCssModulesOption, postcssOption.cssModules)
+
+  if (autoprefixerOption.enable) {
+    plugins.push(autoprefixer(autoprefixerOption.config))
   }
 
-  plugins.push(pxtransform(Object.assign({}, postcssPxtransformOption, customPxtransformConf)))
+  if (pxtransformOption.enable) {
+    plugins.push(pxtransform(pxtransformOption.config))
+  }
 
-  plugins.push(constparse({
-    constants: [{
-      key: 'taro-tabbar-height',
-      val: '50PX'
-    }],
-    platform: 'h5'
-  }))
+  // if (cssModulesOption.enable) {
+  //   plugins.push(modules(cssModulesOption.config))
+  // }
 
-  return plugins.concat(customPlugins)
+  plugins.push(constparse(defaultConstparseOption))
+
+  Object.entries(postcssOption).forEach(([pluginName, pluginOption]) => {
+    if (optionsWithDefaults.indexOf(pluginName) > -1) return
+    if (!pluginOption || !pluginOption.enable) return
+
+    if (!isNpmPackage(pluginName)) { // local plugin
+      pluginName = path.join(appPath, pluginName)
+    }
+
+    try {
+      const pluginPath = resolveSync(pluginName, { basedir: appPath })
+      plugins.push(require(pluginPath)(pluginOption.config || {}))
+    } catch (e) {
+      const msg = e.code === 'MODULE_NOT_FOUND' ? `缺少postcss插件${pluginName}, 已忽略` : e
+      console.log(msg)
+    }
+  })
+
+  return plugins
 }

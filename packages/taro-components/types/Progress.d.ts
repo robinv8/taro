@@ -1,7 +1,7 @@
 import { ComponentType } from 'react'
 import { StandardProps } from './common'
 
-interface ProgressProps extends StandardProps {
+export interface ProgressProps extends StandardProps {
 
   /**
    * 百分比0~100
@@ -56,6 +56,14 @@ interface ProgressProps extends StandardProps {
    * 默认值：`backwards`
    */
   activeMode?: 'backwards' | 'forwards'
+
+
+  /**
+   * 圆角大小
+   * 
+   * 默认值：0
+   */
+  borderRadius?: number
 }
 
 declare const Progress: ComponentType<ProgressProps>

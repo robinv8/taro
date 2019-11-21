@@ -1,4 +1,7 @@
-# 条件渲染
+---
+title: 条件渲染
+---
+
 在 Taro 中，你可以创建不同的组件来封装各种你需要的行为。然后还可以根据应用的状态变化只渲染其中的一部分。
 
 Taro 中的条件渲染和 JavaScript 中的一致，使用 Taro 操作符 if 或条件运算符来创建表示当前状态的元素，然后让 Taro 根据它们来更新 UI。
@@ -8,14 +11,14 @@ Taro 中的条件渲染和 JavaScript 中的一致，使用 Taro 操作符 if �
 
 考虑如下代码：
 
-```javascript
+```jsx
 // LoginStatus.js
 class LoginStatus extends Component {
-  render() {
+  render () {
     const isLoggedIn = this.props.isLoggedIn
-	  // 这里最好初始化声明为 `null`，初始化又不赋值的话
+    // 这里最好初始化声明为 `null`，初始化又不赋值的话
     // 小程序可能会报警为变量为 undefined
-    let status = null;
+    let status = null
     if (isLoggedIn) {
       status = <Text>已登录</Text>
     } else {
@@ -26,7 +29,7 @@ class LoginStatus extends Component {
       <View>
         {status}
       </View>
-    );
+    )
   }
 }
 // app.js
@@ -34,12 +37,12 @@ import LoginStatus from './LoginStatus'
 
 // 这样会渲染 `已登录`
 class App extends Component {
-  render() {
+  render () {
     return (
       <View>
         <LoginStatus isLoggedIn={true} />
       </View>
-    );
+    )
   }
 }
 ```
@@ -52,17 +55,17 @@ class App extends Component {
 
 你可以通过用花括号包裹代码在 JSX 中嵌入几乎任何表达式 ，也包括 JavaScript 的逻辑与 &&，它可以方便地条件渲染一个元素。
 
-```javascript
+```jsx
 class LoginStatus extends Component {
-  render() {
+  render () {
     const isLoggedIn = this.props.isLoggedIn
 
     return (
       <View>
         {isLoggedIn && <Text>已登录</Text>}
-		  {!isLoggedIn && <Text>未登录</Text>}
+        {!isLoggedIn && <Text>未登录</Text>}
       </View>
-    );
+    )
   }
 }
 ```
@@ -75,19 +78,19 @@ class LoginStatus extends Component {
 
 条件渲染的另一种方法是使用 JavaScript 的条件运算符 `condition ? true : false`。
 
-```javascript
+```jsx
 class LoginStatus extends Component {
-  render() {
+  render () {
     const isLoggedIn = this.props.isLoggedIn
 
     return (
       <View>
-        {isLoggedIn
-			? <Text>已登录</Text>
-			: <Text>未登录</Text>
-		  }
+      {isLoggedIn
+        ? <Text>已登录</Text>
+        : <Text>未登录</Text>
+      }
       </View>
-    );
+    )
   }
 }
 ```
@@ -96,4 +99,23 @@ class LoginStatus extends Component {
 
 在 JSX 条件渲染的模式和 JavaScript 差不多，你可以根据团队的习惯选择更易读的方式。但当条件变得过于复杂，可能就是提取元素抽象成组件的好时机了。
 
+### 枚举条件渲染
 
+有时渲染的条件非常多，不管是 `if-else` 还是 `switch-case` 来做条件渲染都会显得太麻烦。这时我们可以使用「表驱动法」：枚举渲染。
+
+```jsx
+function Loading (props) {
+  const { loadingText, LOADING_STATUS, loadingStatus, onRetry } = props
+  return (
+    <View className='loading-status'>
+      {
+        {
+          'loading': loadingText,
+          'fail': <View onClick={onRetry}> 加载失败, 点击重试 </View>,
+          'no-more': '没有更多了'
+        }[loadingStatus] /** loadingStatus 是 `loading`、`fail`、`no-more`  其中一种状态 **/
+      }
+    </View>
+  )
+}
+```

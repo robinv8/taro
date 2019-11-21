@@ -1,3 +1,6 @@
+img[src=""] {
+  opacity: 0;
+}
 .taro-img {
   display: inline-block;
   overflow: hidden;
@@ -5,6 +8,9 @@
   font-size: 0;
   width: 320px;
   height: 240px;
+  &.taro-img__widthfix {
+    height: 100%;
+  }
   &__mode {
     &-scaletofill {
       width: 100%;

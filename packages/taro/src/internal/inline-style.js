@@ -1,23 +1,11 @@
-/*!
- * dashify <https://github.com/jonschlinkert/dashify>
- *
- * console.log(dashify('fooBar'));
- * => 'foo-bar'
- * Copyright (c) 2015-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
+const upperCasePattern = /([A-Z])/g
 
-function dashify (str, options) {
-  if (typeof str !== 'string') {
-    throw new TypeError('expected a string')
-  }
+function dashify (str) {
+  return str.replace(upperCasePattern, dashLower)
+}
 
-  return str.trim()
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/\W/g, m => /[À-ž]/.test(m) ? m : '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-{2,}/g, m => options && options.condense ? '-' : m)
-    .toLowerCase()
+function dashLower (c) {
+  return '-' + c.toLowerCase()
 }
 
 function isObject (val) {
@@ -25,8 +13,15 @@ function isObject (val) {
 }
 
 export function inlineStyle (obj) {
+  if (obj == null) {
+    return ''
+  }
   if (typeof obj === 'string') {
     return obj
+  }
+
+  if (obj === null || obj === undefined) {
+    return ''
   }
 
   if (!isObject(obj)) {

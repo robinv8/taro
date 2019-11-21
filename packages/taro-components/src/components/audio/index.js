@@ -1,3 +1,4 @@
+import 'weui'
 import Nerv from 'nervjs'
 import './style/index.scss'
 
@@ -18,7 +19,7 @@ class Audio extends Nerv.Component {
           currentTime: e.srcElement.currentTime
         }
       })
-      this.props.onTimeupdate && this.props.onTimeupdate(e)
+      this.props.onTimeUpdate && this.props.onTimeUpdate(e)
     })
 
     this.audio.addEventListener('ended', (e) => {

@@ -1,6 +1,7 @@
 import transform from '../src'
 import { buildComponent, baseCode, baseOptions } from './utils'
-import { INTERNAL_DYNAMIC, INTERNAL_SAFE_GET, DEFAULT_Component_SET } from '../src/constant'
+import { INTERNAL_SAFE_GET, DEFAULT_Component_SET } from '../src/constant'
+import generate from 'babel-generator'
 
 describe('基本功能', () => {
   test('导出包', () => {
@@ -29,14 +30,35 @@ describe('基本功能', () => {
     })
   })
 
-  test('支持 TypeScript', () => {
-    expect(() => transform({
-      ...baseOptions,
-      code: buildComponent(`
-        const a: string = '';
-      ` + baseCode),
-      isTyped: true
-    })).not.toThrow()
+  describe('支持 TypeScript', () => {
+    test('tsx', () => {
+      expect(() => transform({
+        ...baseOptions,
+        code: buildComponent(`
+          const a: string = '';
+        ` + baseCode),
+        isTyped: true,
+        sourcePath: 'a.tsx'
+      })).not.toThrow()
+    })
+
+    test('ts', () => {
+      const { ast } = transform({
+        ...baseOptions,
+        code: `
+          const responseHandler = <Output>({ data }: Taro.request.Promised<any>): Output => {
+            if (data.success) {
+              return data.content;
+            } else {
+            }
+          };
+        `,
+        isTyped: true,
+        isNormal: true
+      })
+
+      expect(() => generate(ast)).not.toThrow()
+    })
   })
 
   test('支持 Flow ', () => {
@@ -50,7 +72,7 @@ describe('基本功能', () => {
     })).not.toThrow()
   })
 
-  test('支持 async/await', () => {
+  test.skip('支持 async/await', () => {
     const { code } = transform({
       ...baseOptions,
       code: buildComponent(baseCode, `
@@ -91,7 +113,6 @@ describe('基本功能', () => {
       code: buildComponent(baseCode)
     })
 
-    expect(code.includes(INTERNAL_DYNAMIC)).toBeTruthy()
     expect(code.includes(INTERNAL_SAFE_GET)).toBeTruthy()
   })
 

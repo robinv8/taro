@@ -1,7 +1,7 @@
 import { ComponentType } from 'react'
-import { StandardProps, BaseEventFunction } from './common'
+import { StandardProps, CommonEventFunction } from './common'
 
-interface VideoProps extends StandardProps {
+export interface VideoProps extends StandardProps {
 
   /**
    * 要播放视频的资源地址
@@ -127,41 +127,116 @@ interface VideoProps extends StandardProps {
   poster?: string,
 
   /**
+   * 是否显示静音按钮。
+   *
+   * @default false
+   * @since 2.4.0
+   */
+  showMuteBtn?: boolean,
+
+  /**
+   * 视频的标题，全屏时在顶部展示。
+   *
+   * @since 2.4.0
+   */
+  title?: string,
+
+  /**
+   * 播放按钮的位置。
+   *
+   * - `bottom`: controls bar 上
+   * - `center`: 视频中间
+   *
+   * @default 'bottom'
+   * @since 2.4.0
+   */
+  playBtnPosition?: 'bottom' | 'center',
+
+  /**
+   * 是否开启播放手势，即双击切换播放/暂停。
+   *
+   * @default false
+   * @since 2.4.0
+   */
+  enablePlayGesture?: boolean,
+
+  /**
+   * 当跳转到其它小程序页面时，是否自动暂停本页面的视频。
+   *
+   * @default true
+   * @since 2.5.0
+   */
+  autoPauseIfNavigate?: boolean,
+
+  /**
+   * 当跳转到其它微信原生页面时，是否自动暂停本页面的视频。
+   *
+   * @default true
+   * @since 2.5.0
+   */
+  autoPauseIfOpenNative?: boolean,
+
+  /**
+   * 在非全屏模式下，是否开启亮度与音量调节手势（同 `page-gesture`）。
+   *
+   * @default false
+   * @since 2.6.2
+   */
+  vslideGesture?: boolean,
+
+  /**
+   * 在全屏模式下，是否开启亮度与音量调节手势。
+   *
+   * @default true
+   * @since 2.6.2
+   */
+  vslideGestureInFullscreen?: boolean,
+
+  /**
    * 当开始/继续播放时触发play事件
    */
-  onPlay?: BaseEventFunction,
+  onPlay?: CommonEventFunction,
 
   /**
    * 当暂停播放时触发 pause 事件
    */
-  onPause?: BaseEventFunction,
+  onPause?: CommonEventFunction,
 
   /**
    * 当播放到末尾时触发 ended 事件
    */
-  onEnded?: BaseEventFunction,
+  onEnded?: CommonEventFunction,
 
   /**
    * 播放进度变化时触发, 触发频率 250ms 一次
    *
    * event.detail = {currentTime, duration}
    */
-  onTimeUpdate?: BaseEventFunction,
+  onTimeUpdate?: CommonEventFunction,
 
   /**
    * 当视频进入和退出全屏是触发
    *
    * event.detail = {fullScreen, direction}，direction取为 vertical 或 horizontal
    */
-  onFullscreenChange?: BaseEventFunction,
+  onFullscreenChange?: CommonEventFunction,
 
   /**
    * 当视频进入和退出全屏是触发
    *
    * event.detail = {fullScreen, direction}，direction取为 vertical 或 horizontal
    */
-  onWaiting?: BaseEventFunction,
-  onError?: BaseEventFunction
+  onWaiting?: CommonEventFunction,
+  onError?: CommonEventFunction,
+  /**
+   * 加载进度变化时触发，只支持一段加载。
+   *
+   * @since 2.4.0
+   */
+  onProgress?: CommonEventFunction<{
+    /** 百分比 */
+    buffered: number,
+  }>
 }
 
 declare const Video: ComponentType<VideoProps>

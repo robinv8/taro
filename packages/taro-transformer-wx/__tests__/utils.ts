@@ -1,6 +1,13 @@
 import traverse from 'babel-traverse'
 import * as t from 'babel-types'
 import generate from 'babel-generator'
+import template from 'babel-template'
+import * as html from 'html'
+import T from '@tarojs/taro'
+
+export function prettyPrint (str: string): string {
+  return html.prettyPrint(str, { max_char: 0 })
+}
 
 export function buildComponent (
   renderBody: string,
@@ -22,6 +29,77 @@ export default class Index extends Component {
 }
 `
 }
+
+const internalFunction = `function isObject(arg) {
+  return arg === Object(arg) && typeof arg !== 'function';
+}
+
+function getElementById (a, b, c) {
+  if (c) {
+    return 'test-component-ref'
+  }
+  return 'test-ref'
+}
+
+var Current = {
+  inst: {}
+}
+
+function genLoopCompid () {
+  return null
+}
+
+function genCompid () {
+  return ''
+}
+
+var propsManager = {
+  set (o, id) {
+    Current.inst[id || 'testProps'] = o
+  }
+};
+
+function internal_get_original(item) {
+  if (isObject(item)) {
+    return item.$original || item;
+  }
+
+  return item;
+};
+function dashify(str, options) {
+  if (typeof str !== 'string') {
+    throw new TypeError('expected a string');
+  }
+
+  return str.trim().replace(/([a-z])([A-Z])/g, '$1-$2').replace(/\W/g, function (m) {
+    return /[À-ž]/.test(m) ? m : '-';
+  }).replace(/^-+|-+$/g, '').replace(/-{2,}/g, function (m) {
+    return options && options.condense ? '-' : m;
+  }).toLowerCase();
+}
+
+function internal_inline_style(obj) {
+  if (obj == null) {
+    return '';
+  }
+
+  if (typeof obj === 'string') {
+    return obj;
+  }
+
+  if (obj === null || obj === undefined) {
+    return '';
+  }
+
+  if (!isObject(obj)) {
+    throw new TypeError('style 只能是一个对象或字符串。');
+  }
+
+  return Object.keys(obj).map(function (key) {
+    return dashify(key).concat(':').concat(obj[key]);
+  }).join(';');
+}
+`
 
 export const baseCode = `
 return (
@@ -51,13 +129,16 @@ export const baseOptions = {
   isApp: false,
   sourcePath: __dirname,
   outputPath: __dirname,
+  sourcetDir: __dirname,
   code: '',
   isTyped: false
 }
 
 export function evalClass (ast: t.File, props = '', isRequire = false) {
   let mainClass!: t.ClassDeclaration
-  const statements = new Set<t.ExpressionStatement>()
+  const statements = new Set<t.ExpressionStatement>([
+    template('Current.inst = this;')() as any
+  ])
 
   traverse(ast, {
     ClassDeclaration (path) {
@@ -104,11 +185,12 @@ export function evalClass (ast: t.File, props = '', isRequire = false) {
 
   let code = `function f() {};` +
     generate(t.classDeclaration(t.identifier('Test'), t.identifier('f'), mainClass.body, [])).code +
-    ';' + `new Test(${props})`
-  if (isRequire) {
-    code = 'const { internal_inline_style } = require("@tarojs/taro");' + code
-  }
+    ';' + `var classInst =  new Test(${props});classInst`
+
+  code = internalFunction + code
+
   // tslint:disable-next-line
+  const Taro = T
   return eval(code)
 }
 

@@ -172,17 +172,17 @@
 
 #### 系统信息
 
-☑️ wx.getSystemInfo
+✅ wx.getSystemInfo
 
-☑️ wx.getSystemInfoSync
+✅️ wx.getSystemInfoSync
 
 ☑️ wx.canIUse
 
 #### 网络状态
 
-☑️ wx.getNetworkType
+✅ wx.getNetworkType
 
-☑️ wx.onNetworkStatusChange
+✅ wx.onNetworkStatusChange
 
 #### 加速度计
 
@@ -202,7 +202,7 @@
 
 #### 拨打电话
 
-☑️ wx.makePhoneCall
+✅ wx.makePhoneCall
 
 #### 扫码
 
@@ -378,7 +378,7 @@
 
 #### 动画
 
-☑️ wx.createAnimation
+✅ wx.createAnimation
 
 #### 位置
 

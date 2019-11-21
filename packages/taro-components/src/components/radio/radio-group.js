@@ -1,11 +1,13 @@
+import 'weui'
 import Nerv from 'nervjs'
-
+import { isNumber } from '../../utils/parse-type'
 class RadioGroup extends Nerv.Component {
   constructor () {
     super(...arguments)
     // this.state = {
     //   value: []
     // }
+    this.uniqueName = Date.now().toString(36)
     this.radioValue = []
     this.toggleChange = this.toggleChange.bind(this)
   }
@@ -13,7 +15,9 @@ class RadioGroup extends Nerv.Component {
   toggleChange (e, i) {
     let checkValue
     let _value = this.radioValue.map((item, idx) => {
-      if (e.target.value === item.value) {
+      let curValue = item.value
+      if (isNumber(item.value)) curValue = item.value.toString()
+      if (e.target.value === curValue) {
         checkValue = item.value
         return {
           name: item.name,
@@ -35,8 +39,8 @@ class RadioGroup extends Nerv.Component {
   }
 
   render () {
+    const { name = this.uniqueName } = this.props
     // 给 children 绑定事件
-    const { name = '' } = this.props
     const children = Nerv.Children.toArray(this.props.children).map(
       (item, i) => {
         let _key = item.props.for
@@ -66,8 +70,8 @@ class RadioGroup extends Nerv.Component {
         return Nerv.cloneElement(item, '', chd)
       }
     )
-
-    return children
+    /* TODO 规避Nerv数组diff问题 */
+    return (<div className='weui-cells_radiogroup'>{children}</div>)
   }
 }
 

@@ -2,25 +2,44 @@
 
 const program = require('commander')
 
-const Project = require('../src/project')
+const Project = require('../dist/create/project').default
 
 program
-  .option('--name', '项目名称')
-  .option('--description', '项目介绍')
-  .option('--typescript', '是否使用 TypeScript')
-  .option('--template', '项目模板')
+  .option('--name [name]', '项目名称')
+  .option('--description [description]', '项目介绍')
+  .option('--typescript', '使用TypeScript')
+  .option('--no-typescript', '不使用TypeScript')
+  .option('--template-source [templateSource]', '项目模板源')
+  .option('--clone [clone]', '拉取远程模板时使用git clone')
+  .option('--template [template]', '项目模板')
+  .option('--css [css]', 'CSS预处理器(sass/less/stylus/none)')
   .parse(process.argv)
 
 const args = program.args
-const { template, description, name, typescript } = program
+const { template, templateSource, clone, description, name, css } = program
+let typescript
+
+/**
+ * 非标准做法
+ * 为了兼容不指定typescript参数时，在inquirer中询问是否使用typescript的情况
+ */
+if (program.rawArgs.indexOf('--typescript') !== -1) {
+  typescript = true
+} else if (program.rawArgs.indexOf('--no-typescript') !== -1) {
+  typescript = false
+}
 
 const projectName = args[0] || name
 
 const project = new Project({
   projectName,
+  projectDir: process.cwd(),
+  templateSource,
+  clone,
   template,
   description,
-  typescript
+  typescript,
+  css
 })
 
 project.create()

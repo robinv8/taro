@@ -1,6 +1,8 @@
+import 'weui'
 import Nerv from 'nervjs'
 import omit from 'omit.js'
 import classNames from 'classnames'
+import './style/index.scss'
 
 class View extends Nerv.Component {
   constructor () {
@@ -11,14 +13,18 @@ class View extends Nerv.Component {
     }
   }
 
+  timeoutEvent = 0;
+  startTime = 0;
   render () {
     const {
       hoverClass,
       onTouchStart,
       onTouchEnd,
+      onTouchMove,
       className,
       hoverStartTime = 50,
-      hoverStayTime = 400
+      hoverStayTime = 400,
+      ...other
     } = this.props
     const cls = classNames(
       '',
@@ -42,8 +48,23 @@ class View extends Nerv.Component {
         }, hoverStartTime)
       }
       onTouchStart && onTouchStart(e)
+      if (this.props.onLongPress) {
+        this.timeoutEvent = setTimeout(() => {
+          this.props.onLongPress()
+        }, 350)
+        this.startTime = (new Date()).getTime()
+      }
     }
+    const _onTouchMove = e => {
+      clearTimeout(this.timeoutEvent)
+      onTouchMove && onTouchMove(e)
+    }
+
     const _onTouchEnd = e => {
+      const spanTime = (new Date().getTime()) - this.startTime
+      if (spanTime < 350) {
+        clearTimeout(this.timeoutEvent)
+      }
       if (hoverClass) {
         this.setState(() => ({
           touch: false
@@ -64,13 +85,16 @@ class View extends Nerv.Component {
           'hoverClass',
           'onTouchStart',
           'onTouchEnd',
+          'onTouchMove',
           'className',
           'hoverStartTime',
           'hoverStayTime'
         ])}
+        {...other}
         className={cls}
         onTouchStart={_onTouchStart}
         onTouchEnd={_onTouchEnd}
+        onTouchMove={_onTouchMove}
       >
         {this.props.children}
       </div>

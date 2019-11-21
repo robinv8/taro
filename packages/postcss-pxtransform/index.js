@@ -35,13 +35,13 @@ const baseFontSize = 40
 const DEFAULT_WEAPP_OPTIONS = {
   platform: 'weapp',
   designWidth: 750,
-  deviceRatio,
+  deviceRatio
 }
 
 var targetUnit
 
 module.exports = postcss.plugin('postcss-pxtransform', function (options) {
-  options = Object.assign(DEFAULT_WEAPP_OPTIONS, options || {});
+  options = Object.assign(DEFAULT_WEAPP_OPTIONS, options || {})
 
   switch (options.platform) {
     case 'weapp': {
@@ -54,13 +54,19 @@ module.exports = postcss.plugin('postcss-pxtransform', function (options) {
       targetUnit = 'rem'
       break
     }
+    case 'rn': {
+      options.rootValue = options.deviceRatio[options.designWidth] * 2
+      targetUnit = 'px'
+      break
+    }
   }
 
   convertLegacyOptions(options)
 
   var opts = objectAssign({}, defaults, options)
+  var onePxTransform = typeof options.onePxTransform === 'undefined' ? true : options.onePxTransform
   var pxReplace = createPxReplace(opts.rootValue, opts.unitPrecision,
-    opts.minPixelValue)
+    opts.minPixelValue, onePxTransform)
 
   var satisfyPropList = createPropListMatcher(opts.propList)
 
@@ -74,6 +80,67 @@ module.exports = postcss.plugin('postcss-pxtransform', function (options) {
         }
       }
     }
+
+    // delete code between comment in RN
+    if (options.platform === 'rn') {
+      css.walkComments(comment => {
+        if (comment.text === 'postcss-pxtransform rn eject enable') {
+          let next = comment.next()
+          while (next) {
+            if (next.type === 'comment' && next.text === 'postcss-pxtransform rn eject disable') {
+              break
+            }
+            const temp = next.next()
+            next.remove()
+            next = temp
+          }
+        }
+      })
+    }
+
+    /*  #ifdef  %PLATFORM%  */
+    // 平台特有样式
+    /*  #endif  */
+    css.walkComments(comment => {
+      const wordList = comment.text.split(' ')
+      // 指定平台保留
+      if (wordList.indexOf('#ifdef') > -1) {
+        // 非指定平台
+        if (wordList.indexOf(options.platform) === -1) {
+          let next = comment.next()
+          while (next) {
+            if (next.type === 'comment' && next.text.trim() === '#endif') {
+              break
+            }
+            const temp = next.next()
+            next.remove()
+            next = temp
+          }
+        }
+      }
+    })
+
+    /*  #ifndef  %PLATFORM%  */
+    // 平台特有样式
+    /*  #endif  */
+    css.walkComments(comment => {
+      const wordList = comment.text.split(' ')
+      // 指定平台剔除
+      if (wordList.indexOf('#ifndef') > -1) {
+        // 指定平台
+        if (wordList.indexOf(options.platform) > -1) {
+          let next = comment.next()
+          while (next) {
+            if (next.type === 'comment' && next.text.trim() === '#endif') {
+              break
+            }
+            const temp = next.next()
+            next.remove()
+            next = temp
+          }
+        }
+      }
+    })
 
     css.walkDecls(function (decl, i) {
       // This should be the fastest test and will remove most declarations
@@ -128,9 +195,12 @@ function convertLegacyOptions (options) {
   })
 }
 
-function createPxReplace (rootValue, unitPrecision, minPixelValue) {
+function createPxReplace (rootValue, unitPrecision, minPixelValue, onePxTransform) {
   return function (m, $1) {
     if (!$1) return m
+    if (!onePxTransform && parseInt($1, 10) === 1) {
+      return m
+    }
     var pixels = parseFloat($1)
     if (pixels < minPixelValue) return m
     var fixedVal = toFixed((pixels / rootValue), unitPrecision)

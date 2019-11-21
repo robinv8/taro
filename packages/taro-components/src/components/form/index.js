@@ -1,3 +1,4 @@
+import 'weui'
 import Nerv from 'nervjs'
 
 class Form extends Nerv.Component {
@@ -79,7 +80,8 @@ class Form extends Nerv.Component {
   }
 
   render () {
-    return <form onSubmit={this.onSubmit} onReset={this.onReset}>{this.props.children}</form>
+    const { className, style } = this.props
+    return <form className={className} style={style} onSubmit={this.onSubmit} onReset={this.onReset}>{this.props.children}</form>
   }
 }
 

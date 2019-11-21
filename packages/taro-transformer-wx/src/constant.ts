@@ -1,34 +1,12 @@
-export const BIND_EVENT_MAP = new Map<string, string>()
+import { Adapters } from './adapter'
 
-BIND_EVENT_MAP.set('onClick', 'bindtap')
-BIND_EVENT_MAP.set('onLongClick', 'bindlongtap')
-BIND_EVENT_MAP.set('onTouchMove', 'bindtouchmove')
-BIND_EVENT_MAP.set('onTouchEnd', 'bindtouchend')
-BIND_EVENT_MAP.set('onTouchstart', 'bindtouchend')
-BIND_EVENT_MAP.set('onChange', 'bindchange')
-BIND_EVENT_MAP.set('onInput', 'bindinput')
-BIND_EVENT_MAP.set('onScale', 'bindscale')
-BIND_EVENT_MAP.set('onAnimationFinish', 'bindanimationfinish')
-BIND_EVENT_MAP.set('onScroll', 'bindscroll')
-BIND_EVENT_MAP.set('onScrollToupper', 'bindscrolltoupper')
-BIND_EVENT_MAP.set('onContact', 'bindcontact')
-BIND_EVENT_MAP.set('onGetPhoneNumber', 'bindgetphonenumber')
-BIND_EVENT_MAP.set('onError', 'binderror')
-BIND_EVENT_MAP.set('onSubmit', 'bindsubmit')
-BIND_EVENT_MAP.set('onReset', 'bindReset')
-
-export const CATCH_EVENT_MAP = new Map<string, string>()
-
-BIND_EVENT_MAP.forEach((value, key) => {
-  CATCH_EVENT_MAP.set(key, value)
-})
+export const THIRD_PARTY_COMPONENTS = new Set<string>()
 
 // tslint:disable-next-line:variable-name
 export const DEFAULT_Component_SET = new Set<string>([
   'View',
   'ScrollView',
   'Swiper',
-  'MovableView',
   'CoverView',
   'CoverImage',
   'Icon',
@@ -42,6 +20,7 @@ export const DEFAULT_Component_SET = new Set<string>([
   'Label',
   'Picker',
   'PickerView',
+  'PickerViewColumn',
   'Radio',
   'RadioGroup',
   'CheckboxGroup',
@@ -61,8 +40,19 @@ export const DEFAULT_Component_SET = new Set<string>([
   'WebView',
   'SwiperItem',
   'MovableArea',
-  'MovableView'
+  'MovableView',
+  'FunctionalPageNavigator',
+  'Ad',
+  'Block',
+  'Import',
+  'OfficialAccount',
+  'Template',
+  'Editor'
 ])
+
+// tslint:disable-next-line:variable-name
+export const DEFAULT_Component_SET_COPY = new Set<string>([])
+DEFAULT_Component_SET.forEach((c) => DEFAULT_Component_SET_COPY.add(c))
 
 export const INTERNAL_SAFE_GET = 'internal_safe_get'
 
@@ -70,21 +60,51 @@ export const TARO_PACKAGE_NAME = '@tarojs/taro'
 
 export const COMPONENTS_PACKAGE_NAME = '@tarojs/components'
 
-export const ASYNC_PACKAGE_NAME = '@tarojs/async-await'
-
 export const REDUX_PACKAGE_NAME = '@tarojs/redux'
+
+export const MOBX_PACKAGE_NAME = '@tarojs/mobx'
 
 export const MAP_CALL_ITERATOR = '__item'
 
-export const INTERNAL_DYNAMIC = 'internal_dynamic_recursive'
-
 export const INTERNAL_INLINE_STYLE = 'internal_inline_style'
 
-export const LOOP_STATE = '$loopState'
+export const INTERNAL_GET_ORIGNAL = 'internal_get_original'
 
-export const LOOP_CALLEE = '$anonymousCallee_'
+export const GEL_ELEMENT_BY_ID = 'getElementById'
+
+export const PROPS_MANAGER = 'propsManager'
+
+export const GEN_COMP_ID = 'genCompid'
+
+export const GEN_LOOP_COMPID = 'genLoopCompid'
+
+export const CLASS_COMPONENT_UID = '_$uid'
+
+export let LOOP_STATE = '$loopState'
+
+export const setLoopState = (s: string) => LOOP_STATE = s
+
+export let PREV_COMPID = '$prevCompid'
+
+export let COMPID = '$compid'
+
+export const setCompId = (s: string) => COMPID = s
+
+export let LOOP_ORIGINAL = '$original'
+
+export const setLoopOriginal = (s: string) => LOOP_ORIGINAL = s
+
+export let LOOP_CALLEE = '$anonymousCallee_'
+
+export let setLoopCallee = (s: string) => LOOP_CALLEE = s
+
+export const CONTEXT_PROVIDER = 'PrivateContextProvider'
 
 export const SPECIAL_COMPONENT_PROPS = new Map<string, Set<string>>()
+
+export let IS_TARO_READY = '$taroCompReady'
+
+export const setIsTaroReady = (s: string) => IS_TARO_READY = s
 
 SPECIAL_COMPONENT_PROPS.set(
   'Progress',
@@ -97,4 +117,56 @@ SPECIAL_COMPONENT_PROPS.set(
 export const IMAGE_COMPONENTS = new Set<string>([
   'Image',
   'CoverImage'
+])
+
+export const swanSpecialAttrs = {
+  'ScrollView': ['scrollTop', 'scrollLeft', 'scrollIntoView'],
+  'Input': ['value'],
+  'Textarea': ['value'],
+  'MovableView': ['x', 'y'],
+  'Slider': ['value']
+}
+
+export const ALIPAY_BUBBLE_EVENTS = new Set<string>([
+  'onTouchStart',
+  'onTouchMove',
+  'onTouchEnd',
+  'onTouchCancel',
+  'onClick',
+  'onLongTap'
+])
+
+export const ANONYMOUS_FUNC = 'anonymousFunc'
+
+export const TRANSFORM_COMPONENT_PROPS = new Map<Adapters, { [key: string]: { [key: string]: string } }>()
+
+TRANSFORM_COMPONENT_PROPS.set(Adapters.alipay, {
+  'Canvas': {
+    'canvasId': 'id'
+  }
+})
+
+export const lessThanSignPlacehold = '__LESS_THAN_SIGN_PLACEHOLDER__'
+
+export let FN_PREFIX = '__fn_'
+
+export const setFnPrefix = (s: string) => FN_PREFIX = s
+
+export const quickappComponentName = new Set([
+  'Swiper',
+  'Audio',
+  'Image',
+  'Progress',
+  // 'Text',
+  'Input',
+  'Label',
+  'Picker',
+  'Slider',
+  'Switch',
+  'Textarea',
+  'Video',
+  'Camera',
+  'Canvas',
+  'Map',
+  'Button'
 ])
